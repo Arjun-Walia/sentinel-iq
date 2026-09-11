@@ -2,7 +2,7 @@
 
 A security intelligence workspace with connected telemetry, clear investigations, and evidence-grounded AI.
 
-[Live app](https://sentinaliq.tech) · [Deployment](https://sentinel-iq-jet.vercel.app)
+[Open SentinalIQ](https://sentinaliq.tech)
 
 ## What it does
 
