@@ -48,7 +48,7 @@ def test_rebuild_is_reproducible_and_preserves_cardinality(tmp_path):
     assert first["event_rows"] == second["event_rows"] == 58000
     assert first["sources"] == second["sources"]
     assert first_csv == {p.name: p.read_bytes() for p in tmp_path.glob("*.csv")}
-    with duckdb.connect(str(tmp_path / "sentinel.duckdb"), read_only=True) as con:
+    with duckdb.connect(str(tmp_path / "sentinaliq.duckdb"), read_only=True) as con:
         assert con.execute("SELECT count(*) FROM events").fetchone()[0] == 58000
         assert (
             con.execute("SELECT count(DISTINCT id) FROM events").fetchone()[0] == 58000
@@ -136,105 +136,6 @@ def test_export_matches_current_scope(client):
     rows = list(csv.DictReader(io.StringIO(response.data.decode())))
     assert len(rows) == client.get("/api/events?" + args).json["total"]
     assert all(r["source"] == "iam" and r["department"] == "IT" for r in rows)
-
-
-@pytest.mark.parametrize(
-    "question,chart",
-    [
-        ("Show failed logins by department", "bar"),
-        ("Which user has the most failed logins?", "bar"),
-        ("Endpoint alerts by severity", "bar"),
-        ("Show daily trend of critical endpoint alerts", "line"),
-        ("Compare firewall allow vs deny by protocol", "bar"),
-        ("Which hosts have the most threat flags?", "bar"),
-        ("MFA failure trend", "line"),
-        ("Daily telemetry volume", "line"),
-        ("Top endpoint alert types", "bar"),
-        ("Activity of inactive identities", "bar"),
-    ],
-)
-def test_supported_questions_produce_grounded_charts(client, question, chart):
-    response = client.post("/api/ask", json={"question": question})
-    assert response.status_code == 200
-    result = response.json
-    assert result["chart"] == chart
-    assert result["engine"] == "Local query engine"
-    assert result["rows"] and len(result["rows"]) <= 60
-    assert result["sql"].startswith("SELECT")
-
-
-def test_agent_scope_and_unsupported_question(client):
-    result = client.post(
-        "/api/ask",
-        json={
-            "question": "Failed logins by department in the last 7 days",
-            "department": "IT",
-        },
-    ).json
-    assert result["scope"]["period"] == "7"
-    assert all(r["label"] == "IT" for r in result["rows"])
-    assert (
-        client.post(
-            "/api/ask", json={"question": "Write a poem about ducks"}
-        ).status_code
-        == 422
-    )
-    assert client.post("/api/ask", json={"question": "x"}).status_code == 400
-    assert (
-        client.post(
-            "/api/ask", json={"question": "Failed logins over the last 14 days"}
-        ).status_code
-        == 422
-    )
-    result = client.post(
-        "/api/ask", json={"question": "Top Finance users with failed logins all time"}
-    ).json
-    assert result["scope"]["department"] == "Finance"
-    assert result["scope"]["period"] == "all"
-    result = client.post(
-        "/api/ask", json={"question": "Show failed logins by department in Finance"}
-    ).json
-    assert result["scope"]["department"] == "Finance"
-    result = client.post(
-        "/api/ask", json={"question": "Show it as a daily telemetry volume chart"}
-    ).json
-    assert "department" not in result["scope"]
-
-
-def test_model_failure_is_visible_and_falls_back(client, monkeypatch):
-    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-only")
-
-    def fail(*args, **kwargs):
-        raise server.requests.Timeout()
-
-    monkeypatch.setattr(server.requests, "post", fail)
-    result = client.post(
-        "/api/ask", json={"question": "Endpoint alerts by severity"}
-    ).json
-    assert result["engine"] == "Local query engine"
-    assert result["warning"]
-
-
-def test_deepseek_flash_model_configuration(client, monkeypatch):
-    from types import SimpleNamespace
-
-    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-only")
-    monkeypatch.delenv("DEEPSEEK_MODEL", raising=False)
-    calls = []
-
-    def respond(url, **kwargs):
-        calls.append(kwargs["json"])
-        return SimpleNamespace(
-            raise_for_status=lambda: None,
-            json=lambda: {"choices": [{"message": {"content": '{"intent":"severity"}'}}]},
-        )
-
-    monkeypatch.setattr(server.requests, "post", respond)
-    response = client.post("/api/ask", json={"question": "Endpoint alerts by severity"})
-    assert response.status_code == 200
-    assert calls[0]["model"] == "deepseek-v4-flash"
-    assert calls[0]["thinking"] == {"type": "disabled"}
-    assert response.json["rows"]
 
 
 def test_case_notes_persist_without_mutating_telemetry(client, monkeypatch, tmp_path):

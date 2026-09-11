@@ -1,10 +1,9 @@
-"""Sentinel IQ: analytical API and dashboard, with bounded graph-first questions."""
+"""SentinalIQ: analytical API and retrieval-augmented security workspace."""
 
 import csv
 import io
 import json
 import os
-import re
 import shutil
 import sqlite3
 from datetime import timedelta
@@ -13,9 +12,17 @@ from pathlib import Path
 import duckdb
 import requests
 from dotenv import load_dotenv
-from flask import Flask, Response, jsonify, render_template, request
+from flask import (
+    Flask,
+    Response,
+    jsonify,
+    render_template,
+    request,
+    send_from_directory,
+)
 from werkzeug.exceptions import BadRequest
 
+import rag
 from pipeline import DATA as BUNDLED_DATA
 from pipeline import DB as BUNDLED_DB
 from pipeline import build
@@ -25,17 +32,17 @@ DATA = BUNDLED_DATA
 DB = BUNDLED_DB
 
 if os.getenv("VERCEL"):
-    DATA = Path("/tmp/sentinel-iq-data")
-    DB = DATA / "sentinel.duckdb"
+    DATA = Path("/tmp/sentinaliq-data")
+    DB = DATA / "sentinaliq.duckdb"
     if not DB.exists():
         DATA.mkdir(parents=True, exist_ok=True)
-        for filename in ("sentinel.duckdb", "quality.json", "cases.sqlite"):
+        for filename in ("sentinaliq.duckdb", "quality.json", "cases.sqlite"):
             source = BUNDLED_DATA / filename
             if source.exists():
                 shutil.copy2(source, DATA / filename)
 
 app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 64 * 1024
 
 
 def query(sql, params=None):
@@ -58,9 +65,9 @@ def initialize():
 
 def scope(args):
     clauses, params = ["1=1"], []
-    period = str(args.get("period", "30"))
-    if period not in {"7", "30", "all"}:
-        raise BadRequest("Period must be 7, 30, or all.")
+    period = str(args.get("period", "30")).strip().lower()
+    if period != "all" and (not period.isdigit() or not 1 <= int(period) <= 3650):
+        raise BadRequest("Period must be all or a number of days from 1 to 3650.")
     latest = query("SELECT cast(max(timestamp) AS DATE) AS latest FROM events")[0][
         "latest"
     ]
@@ -105,6 +112,17 @@ def index():
     return render_template("index.html")
 
 
+@app.get("/public/<path:filename>")
+def public_asset(filename):
+    return send_from_directory(Path(app.root_path) / "public", filename, max_age=86400)
+
+
+@app.get("/robots.txt")
+@app.get("/sitemap.xml")
+def search_metadata():
+    return send_from_directory(Path(app.root_path) / "public", request.path.lstrip("/"))
+
+
 @app.get("/api/meta")
 def meta():
     bounds = query(
@@ -116,7 +134,9 @@ def meta():
             r["department"]
             for r in query("SELECT DISTINCT department FROM events ORDER BY 1")
         ],
-        agent="DeepSeek V4 Flash · RAG selector" if os.getenv("DEEPSEEK_API_KEY") else "Local query engine",
+        agent="DeepSeek V4 Flash · RAG"
+        if os.getenv("DEEPSEEK_API_KEY")
+        else "AI not connected",
         synthetic=True,
     )
 
@@ -313,208 +333,63 @@ def export():
     return Response(
         buffer.getvalue(),
         mimetype="text/csv",
-        headers={"Content-Disposition": 'attachment; filename="sentinel-evidence.csv"'},
+        headers={
+            "Content-Disposition": 'attachment; filename="sentinaliq-evidence.csv"'
+        },
     )
-
-
-QUESTIONS = {
-    "failed_departments": (
-        "Failed logins by department",
-        "bar",
-        "department",
-        "kind='login_failed'",
-    ),
-    "failed_users": (
-        "Users with the most failed logins",
-        "bar",
-        "coalesce(user_id,'Unknown')",
-        "kind='login_failed'",
-    ),
-    "severity": ("Endpoint alerts by severity", "bar", "severity", "source='endpoint'"),
-    "critical_trend": (
-        "Daily critical endpoint alerts",
-        "line",
-        "cast(cast(timestamp AS DATE) AS VARCHAR)",
-        "source='endpoint' AND severity='Critical' AND timestamp IS NOT NULL",
-    ),
-    "firewall": (
-        "Firewall actions by protocol",
-        "bar",
-        "protocol || ' / ' || action",
-        "source='firewall'",
-    ),
-    "threat_hosts": (
-        "Hosts with the most threat flags",
-        "bar",
-        "coalesce(hostname,'Unknown')",
-        "threat",
-    ),
-    "mfa_trend": (
-        "Daily MFA failures",
-        "line",
-        "cast(cast(timestamp AS DATE) AS VARCHAR)",
-        "kind='mfa_failed' AND timestamp IS NOT NULL",
-    ),
-    "activity_trend": (
-        "Daily telemetry volume",
-        "line",
-        "cast(cast(timestamp AS DATE) AS VARCHAR)",
-        "timestamp IS NOT NULL",
-    ),
-    "alert_types": (
-        "Most frequent endpoint alert types",
-        "bar",
-        "kind",
-        "source='endpoint'",
-    ),
-    "inactive": (
-        "Activity associated with inactive identities",
-        "bar",
-        "coalesce(user_id,'Unknown')",
-        "identity_status='Inactive'",
-    ),
-}
-
-
-def local_intent(question):
-    q = question.lower()
-    if "mfa" in q:
-        return "mfa_trend"
-    if "inactive" in q or "terminated" in q:
-        return "inactive"
-    if "critical" in q and any(w in q for w in ["trend", "daily", "time"]):
-        return "critical_trend"
-    if "severity" in q:
-        return "severity"
-    if any(w in q for w in ["failed", "failure"]):
-        return "failed_departments" if "department" in q else "failed_users"
-    if "protocol" in q or ("allow" in q and "deny" in q):
-        return "firewall"
-    if "threat" in q and any(w in q for w in ["host", "hostname"]):
-        return "threat_hosts"
-    if "alert" in q and any(w in q for w in ["type", "frequent", "top"]):
-        return "alert_types"
-    if any(w in q for w in ["activity", "volume", "telemetry"]) and any(
-        w in q for w in ["trend", "daily", "time"]
-    ):
-        return "activity_trend"
-    return None
 
 
 @app.post("/api/ask")
 def ask():
-    body = request.get_json()
+    body = request.get_json(silent=True)
     if (
         not isinstance(body, dict)
         or not isinstance(body.get("question"), str)
-        or not 3 <= len(body["question"].strip()) <= 500
+        or not 2 <= len(body["question"].strip()) <= 500
     ):
-        raise BadRequest("Ask a question between 3 and 500 characters.")
-    question = body["question"].strip()
-    requested_window = re.search(
-        r"(?:last|past)\s+(\d+)\s+(days?|hours?|months?|years?)", question.lower()
-    )
-    if requested_window and (
-        requested_window[1] not in {"7", "30"}
-        or requested_window[2] not in {"day", "days"}
-    ):
-        return jsonify(
-            error="The query catalog supports last 7 days, last 30 days, or the All time filter. Choose one of these windows."
-        ), 422
-    intent, engine, warning = local_intent(question), "Local query engine", None
-    if os.getenv("DEEPSEEK_API_KEY"):
-        # Retrieve the closest supported question templates; the model selects one and never executes SQL.
-        catalog = {k: v[0] for k, v in QUESTIONS.items()}
-        try:
-            response = requests.post(
-                "https://api.deepseek.com/chat/completions",
-                headers={"Authorization": "Bearer " + os.environ["DEEPSEEK_API_KEY"]},
-                json={
-                    "model": os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash"),
-                    "thinking": {"type": "disabled"},
-                    "response_format": {"type": "json_object"},
-                    "max_tokens": 150,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": 'Return JSON {"intent": "catalog_key"} selecting the supported analytical intent. Use null for unsupported questions. Catalog: '
-                            + json.dumps(catalog),
-                        },
-                        {"role": "user", "content": question},
-                    ],
-                },
-                timeout=20,
-            )
-            response.raise_for_status()
-            candidate = json.loads(
-                response.json()["choices"][0]["message"]["content"]
-            ).get("intent")
-            if candidate in QUESTIONS:
-                intent, engine = candidate, "DeepSeek · validated query"
-            elif candidate is not None:
-                raise ValueError("Unsupported model intent")
-            else:
-                intent = None
-        except (requests.RequestException, ValueError, KeyError, IndexError, TypeError):
-            warning = "DeepSeek was unavailable or returned an invalid response. Used the local query engine."
-    if not intent:
-        return jsonify(
-            error="This question is outside the supported query catalog. Try failed logins by department, endpoint severity, critical alert trends, firewall protocols, or top threat hosts.",
-            suggestions=[v[0] for v in QUESTIONS.values()],
-        ), 422
-    args = {
-        k: v
-        for k, v in body.items()
-        if k in {"period", "source", "severity", "department", "q"}
-    }
-    days = re.search(r"(?:last|past)\s+(7|30)\s+days", question.lower())
-    if days:
-        args["period"] = days.group(1)
-    if "all time" in question.lower():
-        args["period"] = "all"
-    departments = query(
-        "SELECT DISTINCT department FROM events WHERE department!='Unknown'"
-    )
-    named = [
-        r["department"]
-        for r in departments
-        if re.search(
-            r"\b" + re.escape(r["department"].lower()) + r"\b", question.lower()
+        raise BadRequest("Ask a question between 2 and 500 characters.")
+    history = body.get("history", [])
+    if (
+        not isinstance(history, list)
+        or len(history) > 8
+        or any(
+            not isinstance(item, dict)
+            or item.get("role") not in {"user", "assistant"}
+            or not isinstance(item.get("content"), str)
+            or len(item["content"]) > 7000
+            for item in history
         )
-        and (r["department"] != "IT" or re.search(r"\bIT\b", question))
-    ]
-    if len(named) > 1:
+    ):
+        raise BadRequest("Invalid conversation history.")
+    args = {
+        "period": "30",
+        **{
+            key: body[key]
+            for key in ("period", "source", "severity", "department", "hostname", "q")
+            if key in body
+        },
+    }
+    scope(args)
+    if not os.getenv("DEEPSEEK_API_KEY"):
         return jsonify(
-            error="Use the department comparison question with All departments, or select one department in the filters."
-        ), 422
-    if named:
-        args["department"] = named[0]
-    title, chart, group, condition = QUESTIONS[intent]
-    sql = (
-        f"SELECT {group} AS label, count(*) AS value FROM events WHERE {{where}} AND {condition} GROUP BY 1 ORDER BY "
-        + ("label" if chart == "line" else "value DESC, label")
-        + " LIMIT 60"
-    )
-    rows = selected(sql, args)
-    top = max(rows, key=lambda r: r["value"]) if rows else None
-    answer = (
-        f"{top['label']} has the highest count: {top['value']:,}. The chart contains {sum(r['value'] for r in rows):,} matching events across {len(rows)} groups."
-        if top
-        else "No matching events in this scope. Try All sources or a wider time window."
-    )
-    where, params = scope(args)
-    return jsonify(
-        title=title,
-        chart=chart,
-        rows=rows,
-        answer=answer,
-        engine=engine,
-        warning=warning,
-        sql=sql.replace("{where}", where),
-        parameters=[str(p) for p in params],
-        scope=args,
-        note="Dates are relative to the latest dataset event, not today. Up to 60 groups. Risk flags are indicators, not confirmed incidents.",
-    )
+            error="The AI assistant is not connected. Configure DEEPSEEK_API_KEY on the server to enable answers."
+        ), 503
+    try:
+        return jsonify(
+            rag.answer(body["question"].strip(), args, history, query, scope)
+        )
+    except requests.RequestException:
+        app.logger.warning(
+            "DeepSeek request failed; no substitute answer was generated."
+        )
+        return jsonify(
+            error="DeepSeek is unavailable right now. Please try again in a moment."
+        ), 503
+    except (ValueError, KeyError, IndexError, TypeError, duckdb.Error):
+        app.logger.warning("DeepSeek retrieval or answer validation failed.")
+        return jsonify(
+            error="I could not verify the retrieved answer. Please rephrase your question or try again."
+        ), 502
 
 
 @app.errorhandler(BadRequest)
@@ -538,7 +413,7 @@ if __name__ == "__main__":
     from waitress import serve
 
     print(
-        "Sentinel IQ running at http://localhost:" + os.getenv("PORT", "5000"),
+        "SentinalIQ running at http://localhost:" + os.getenv("PORT", "5000"),
         flush=True,
     )
     serve(app, host=os.getenv("HOST", "127.0.0.1"), port=int(os.getenv("PORT", "5000")))

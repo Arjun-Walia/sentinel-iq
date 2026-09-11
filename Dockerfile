@@ -4,7 +4,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-RUN python pipeline.py && useradd --create-home sentinel && chown -R sentinel:sentinel /app
-USER sentinel
+RUN python pipeline.py && useradd --create-home sentinaliq && chown -R sentinaliq:sentinaliq /app
+USER sentinaliq
 EXPOSE 5000
 CMD ["python", "app.py"]

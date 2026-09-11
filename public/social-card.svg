@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs><radialGradient id="glow"><stop stop-color="#d5f478" stop-opacity=".2"/><stop offset="1" stop-color="#d5f478" stop-opacity="0"/></radialGradient></defs>
+  <rect width="1200" height="630" fill="#111710"/>
+  <circle cx="1000" cy="340" r="450" fill="url(#glow)"/>
+  <g fill="none" stroke="#56743b" stroke-width="2"><path d="M840 200 1030 145 1110 365 925 480 790 365Z M840 200 925 480M1030 145 790 365M1110 365 840 200"/><circle cx="945" cy="310" r="215" stroke-opacity=".3"/></g>
+  <g fill="#d5f478"><circle cx="840" cy="200" r="9"/><circle cx="1030" cy="145" r="7"/><circle cx="1110" cy="365" r="10"/><circle cx="925" cy="480" r="8"/><circle cx="790" cy="365" r="7"/></g>
+  <g font-family="Segoe UI,Arial,sans-serif"><text x="76" y="110" fill="#eaf0e1" font-size="32" font-weight="700">Sentinal<tspan fill="#d5f478">IQ</tspan></text><text x="76" y="235" fill="#a0ae92" font-size="16" letter-spacing="4">SECURITY INTELLIGENCE, MADE CLEAR</text><text x="72" y="329" fill="#f1f5ec" font-size="68" font-weight="600">See the signals.</text><text x="72" y="413" fill="#d5f478" font-size="68" font-weight="600">Connect the dots.</text><text x="76" y="498" fill="#adbaa0" font-size="21">Connected telemetry. Evidence-grounded AI.</text><text x="76" y="573" fill="#d5f478" font-size="18">sentinaliq.tech</text></g>
+</svg>

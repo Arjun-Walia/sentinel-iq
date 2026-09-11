@@ -1,4 +1,4 @@
-name: Verify Sentinel IQ
+name: Verify SentinalIQ
 on: [push, pull_request]
 permissions:
   contents: read

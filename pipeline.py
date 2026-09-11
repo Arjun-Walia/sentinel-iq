@@ -13,7 +13,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parent
 RAW = ROOT / "track2_cybersecurity_dataset_files"
 DATA = ROOT / "data"
-DB = DATA / "sentinel.duckdb"
+DB = DATA / "sentinaliq.duckdb"
 MISSING = {
     "",
     "na",
@@ -506,7 +506,7 @@ def build(raw=RAW, destination=DATA):
             ]
             == 0
         )
-    temp_db.replace(destination / "sentinel.duckdb")
+    temp_db.replace(destination / "sentinaliq.duckdb")
     (destination / "quality.json").write_text(
         json.dumps(report, indent=2), encoding="utf-8"
     )

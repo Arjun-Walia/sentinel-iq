@@ -3,7 +3,7 @@ __pycache__/
 .pytest_cache/
 .env
 data/*
-!data/sentinel.duckdb
+!data/sentinaliq.duckdb
 !data/quality.json
 !data/cases.sqlite
 output/

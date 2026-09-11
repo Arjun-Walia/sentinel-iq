@@ -1,0 +1,17 @@
+{
+  "name": "SentinalIQ",
+  "short_name": "SentinalIQ",
+  "description": "Connected security telemetry and evidence-grounded AI.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f6f0",
+  "theme_color": "#f5f6f0",
+  "icons": [
+    {
+      "src": "/public/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

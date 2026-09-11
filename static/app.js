@@ -1,19 +1,30 @@
+window.va =
+  window.va ||
+  function () {
+    (window.vaq = window.vaq || []).push(arguments);
+  };
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 try {
   document.documentElement.dataset.theme =
-    localStorage.getItem("sentinel-theme") === "dark" ? "dark" : "light";
+    localStorage.getItem("sentinaliq-theme") === "dark" ? "dark" : "light";
 } catch {
   document.documentElement.dataset.theme = "light";
 }
 const esc = (value) =>
   String(value ?? "—").replace(
     /[&<>"']/g,
-    (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char],
+    (char) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        char
+      ],
   );
-const fmt = (value) => Number(value || 0).toLocaleString("en-US");
+const fmt = (value) =>
+  Number(value || 0).toLocaleString("en-US", { maximumFractionDigits: 2 });
 const compact = (value) =>
-  Number(value || 0) >= 1000 ? (value / 1000).toFixed(1) + "k" : fmt(Math.round(value));
+  Number(value || 0) >= 1000
+    ? (value / 1000).toFixed(1) + "k"
+    : fmt(Math.round(value));
 const colors = {
   Critical: "#f49482",
   High: "#e4bd77",
@@ -21,7 +32,11 @@ const colors = {
   Low: "#677b4c",
   Unknown: "#849079",
 };
-const sourceNames = { iam: "Identity & access", firewall: "Firewall", endpoint: "Endpoint" };
+const sourceNames = {
+  iam: "Identity & access",
+  firewall: "Firewall",
+  endpoint: "Endpoint",
+};
 const paths = {
   moon: "M21 13a9 9 0 0 1-10-10A9 9 0 1 0 21 13Z",
   sun: "M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5",
@@ -29,7 +44,8 @@ const paths = {
   overview: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
   activity: "M2 12h4l3-8 5 16 3-8h5",
   network: "M12 8v5M6 17l6-4 6 4 M9 2h6v6H9z M2 17h7v5H2z M15 17h7v5h-7z",
-  sparkles: "m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z M20 2v4M18 4h4",
+  sparkles:
+    "m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z M20 2v4M18 4h4",
   layers: "m12 3 10 5-10 5L2 8l10-5Z M2 12l10 5 10-5M2 16l10 5 10-5",
   bookmark: "M6 3h12v18l-6-4-6 4V3Z",
   shield: "m12 3 9 4v5c0 5-9 10-9 10S3 17 3 12V7l9-4Z M8 12l3 3 5-6",
@@ -46,13 +62,15 @@ const paths = {
   x: "m6 6 12 12M6 18 18 6",
   crosshair: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M12 2v5m0 10v5M2 12h5m10 0h5",
   info: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M12 11v6m0-10v.1",
-  database: "M21 5c0 2-4 3-9 3S3 7 3 5s4-3 9-3 9 1 9 3ZM3 5v14c0 4 18 4 18 0V5M3 12c0 4 18 4 18 0",
+  database:
+    "M21 5c0 2-4 3-9 3S3 7 3 5s4-3 9-3 9 1 9 3ZM3 5v14c0 4 18 4 18 0V5M3 12c0 4 18 4 18 0",
   chart: "M3 3v18h18M7 16v-5m5 5V7m5 9V4",
   code: "m8 6-6 6 6 6m8-12 6 6-6 6m-3-14-2 16",
   monitor: "M3 3h18v13H3z M12 16v5m-5 0h10",
   alert: "m12 3 10 18H2L12 3Zm0 6v5m0 3v.1",
   check: "m5 12 4 4L19 6",
-  globe: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18",
+  globe:
+    "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18",
   clock: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M12 7v5l3 2",
 };
 const icon = (name) =>
@@ -73,6 +91,7 @@ const state = {
   hostData: null,
   sequence: 0,
   eventSequence: 0,
+  history: [],
 };
 const views = {
   overview: [
@@ -94,7 +113,7 @@ const views = {
     "FOLLOW THE EVIDENCE",
   ],
   assistant: [
-    "Ask Sentinel",
+    "Ask SentinalIQ",
     "A better question. <span>A clearer picture.</span>",
     "Explore your security data through grounded answers and generated charts.",
     "INTELLIGENCE, ON DEMAND",
@@ -113,10 +132,18 @@ const views = {
   ],
 };
 function filters() {
-  return { period: $("#period").value, source: $("#source").value, department: $("#department").value };
+  return {
+    period: $("#period").value,
+    source: $("#source").value,
+    department: $("#department").value,
+  };
 }
 function eventFilters() {
-  return { ...filters(), severity: $("#severity-filter").value, q: $("#event-search").value.trim() };
+  return {
+    ...filters(),
+    severity: $("#severity-filter").value,
+    q: $("#event-search").value.trim(),
+  };
 }
 function params(args) {
   return new URLSearchParams(args).toString();
@@ -124,7 +151,8 @@ function params(args) {
 async function api(url, options = {}) {
   const response = await fetch(url, options);
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error || `Request failed (${response.status}).`);
+  if (!response.ok)
+    throw new Error(data.error || `Request failed (${response.status}).`);
   return data;
 }
 function post(url, body) {
@@ -138,7 +166,10 @@ function toast(message) {
   $("#toast").textContent = message;
   $("#toast").classList.remove("hidden");
   clearTimeout(state.toastTimer);
-  state.toastTimer = setTimeout(() => $("#toast").classList.add("hidden"), 4000);
+  state.toastTimer = setTimeout(
+    () => $("#toast").classList.add("hidden"),
+    4000,
+  );
 }
 function error(message) {
   $("#error-banner").textContent = message;
@@ -146,7 +177,9 @@ function error(message) {
 }
 function dateTime(value) {
   return value
-    ? new Date(value.replace(" ", "T") + (/[Z+]$/.test(value) ? "" : "Z")).toLocaleString("en-GB", {
+    ? new Date(
+        value.replace(" ", "T") + (/[Z+]$/.test(value) ? "" : "Z"),
+      ).toLocaleString("en-GB", {
         day: "2-digit",
         month: "short",
         hour: "2-digit",
@@ -169,7 +202,8 @@ function empty(message, title = "No matching evidence") {
   return `<div class="empty">${icon("search")}<h3>${esc(title)}</h3>${esc(message)}</div>`;
 }
 function lineChart(rows, valueKey = "total", secondary = "high_risk") {
-  if (!rows.length) return '<div class="chart-empty">No dated events in this scope.</div>';
+  if (!rows.length)
+    return '<div class="chart-empty">No dated events in this scope.</div>';
   const width = 700,
     height = 190,
     left = 39,
@@ -179,7 +213,8 @@ function lineChart(rows, valueKey = "total", secondary = "high_risk") {
   const plotW = width - left - right,
     plotH = height - top - bottom;
   const max = Math.max(1, ...rows.map((r) => Number(r[valueKey]))) * 1.15;
-  const x = (i) => left + (rows.length === 1 ? plotW / 2 : (i * plotW) / (rows.length - 1));
+  const x = (i) =>
+    left + (rows.length === 1 ? plotW / 2 : (i * plotW) / (rows.length - 1));
   const y = (v) => top + plotH - ((Number(v) || 0) * plotH) / max;
   const points = (key) => rows.map((r, i) => `${x(i)},${y(r[key])}`).join(" ");
   const id = "fill-" + Math.random().toString(36).slice(2);
@@ -191,7 +226,9 @@ function lineChart(rows, valueKey = "total", secondary = "high_risk") {
   const labelIndexes = [
     ...new Set(
       Array.from({ length: Math.min(6, rows.length) }, (_, i) =>
-        Math.round((i * (rows.length - 1)) / Math.max(1, Math.min(6, rows.length) - 1)),
+        Math.round(
+          (i * (rows.length - 1)) / Math.max(1, Math.min(6, rows.length) - 1),
+        ),
       ),
     ),
   ];
@@ -247,7 +284,13 @@ function drawDonut(rows) {
 function renderOverview(data) {
   const m = data.metrics;
   const metrics = [
-    ["Total events", m.total, "activity", `${fmt(m.identities)} associated identities`, false],
+    [
+      "Total events",
+      m.total,
+      "activity",
+      `${fmt(m.identities)} associated identities`,
+      false,
+    ],
     [
       "High-risk signals",
       m.high_risk,
@@ -255,8 +298,20 @@ function renderOverview(data) {
       `${m.total ? ((m.high_risk / m.total) * 100).toFixed(1) : 0}% of selected events`,
       true,
     ],
-    ["Observed hosts", m.hosts, "monitor", "Across selected telemetry sources", false],
-    ["Open endpoint alerts", m.open_alerts, "alert", "Open + investigating statuses", false],
+    [
+      "Observed hosts",
+      m.hosts,
+      "monitor",
+      "Across selected telemetry sources",
+      false,
+    ],
+    [
+      "Open endpoint alerts",
+      m.open_alerts,
+      "alert",
+      "Open + investigating statuses",
+      false,
+    ],
   ];
   $("#metrics").innerHTML = metrics
     .map(
@@ -278,7 +333,9 @@ function renderOverview(data) {
     : empty("Try widening your filters.");
   $("#recent-events").innerHTML = data.recent.length
     ? data.recent.map(eventRow).join("")
-    : '<tr><td colspan="6">' + empty("No high-risk observations in this scope.") + "</td></tr>";
+    : '<tr><td colspan="6">' +
+      empty("No high-risk observations in this scope.") +
+      "</td></tr>";
   renderHosts(data.hosts);
 }
 function eventRow(r) {
@@ -289,14 +346,21 @@ function eventRow(r) {
 function drawGlobe(countries) {
   const land = [
     [
-      -168, 70, -145, 70, -125, 59, -123, 48, -115, 31, -98, 17, -82, 9, -81, 25, -65, 46, -54, 49, -61, 65,
-      -100, 76,
+      -168, 70, -145, 70, -125, 59, -123, 48, -115, 31, -98, 17, -82, 9, -81,
+      25, -65, 46, -54, 49, -61, 65, -100, 76,
     ],
-    [-81, 11, -64, 10, -48, -1, -35, -8, -45, -24, -60, -55, -74, -48, -81, -12],
-    [-17, 36, 10, 37, 34, 31, 43, 12, 51, 10, 40, -12, 32, -34, 18, -35, 9, -10, -5, 5, -17, 16],
     [
-      -10, 36, -9, 58, 9, 71, 40, 70, 63, 76, 100, 76, 144, 65, 180, 65, 175, 50, 140, 40, 124, 23, 107, 1,
-      96, 5, 79, 8, 69, 24, 50, 12, 37, 31, 21, 36,
+      -81, 11, -64, 10, -48, -1, -35, -8, -45, -24, -60, -55, -74, -48, -81,
+      -12,
+    ],
+    [
+      -17, 36, 10, 37, 34, 31, 43, 12, 51, 10, 40, -12, 32, -34, 18, -35, 9,
+      -10, -5, 5, -17, 16,
+    ],
+    [
+      -10, 36, -9, 58, 9, 71, 40, 70, 63, 76, 100, 76, 144, 65, 180, 65, 175,
+      50, 140, 40, 124, 23, 107, 1, 96, 5, 79, 8, 69, 24, 50, 12, 37, 31, 21,
+      36,
     ],
     [112, -11, 134, -11, 153, -25, 145, -40, 116, -34],
     [-53, 60, -22, 64, -20, 82, -45, 84, -62, 73],
@@ -309,7 +373,8 @@ function drawGlobe(countries) {
         b = poly[i + 1],
         c = poly[j],
         d = poly[j + 1];
-      if (b > lat !== d > lat && lon < ((c - a) * (lat - b)) / (d - b) + a) inside = !inside;
+      if (b > lat !== d > lat && lon < ((c - a) * (lat - b)) / (d - b) + a)
+        inside = !inside;
     }
     return inside;
   };
@@ -317,10 +382,14 @@ function drawGlobe(countries) {
     const a = ((lon - 42) * Math.PI) / 180,
       b = (lat * Math.PI) / 180,
       t = (15 * Math.PI) / 180;
-    const depth = Math.sin(b) * Math.sin(t) + Math.cos(b) * Math.cos(a) * Math.cos(t);
+    const depth =
+      Math.sin(b) * Math.sin(t) + Math.cos(b) * Math.cos(a) * Math.cos(t);
     return {
       x: 200 + 147 * Math.cos(b) * Math.sin(a),
-      y: 148 - 147 * (Math.sin(b) * Math.cos(t) - Math.cos(b) * Math.cos(a) * Math.sin(t)),
+      y:
+        148 -
+        147 *
+          (Math.sin(b) * Math.cos(t) - Math.cos(b) * Math.cos(a) * Math.sin(t)),
       depth,
     };
   };
@@ -358,7 +427,11 @@ function drawGlobe(countries) {
     `<svg viewBox="0 0 400 280" role="img" aria-label="Reported country locations on a decorative globe"><defs><radialGradient id="earth-light"><stop stop-color="#6e9340" stop-opacity=".06"/><stop offset=".85" stop-color="#5f7d36" stop-opacity=".01"/><stop offset="1" stop-color="#a5d861" stop-opacity=".09"/></radialGradient></defs><circle cx="200" cy="148" r="147" fill="url(#earth-light)" stroke="#8eb755" stroke-opacity=".08"/><ellipse cx="200" cy="148" rx="172" ry="57" fill="none" stroke="#778b57" stroke-opacity=".14" transform="rotate(-24 200 148)"/>${dots}${marks}</svg>`;
 }
 function networkSvg(host, signals) {
-  const positions = { iam: [75, 75], endpoint: [345, 75], firewall: [210, 232] };
+  const positions = {
+    iam: [75, 75],
+    endpoint: [345, 75],
+    firewall: [210, 232],
+  };
   const center = [210, 130];
   return `<svg viewBox="0 0 420 280" role="img" aria-label="${esc(host)} connected to observed data sources"><defs><radialGradient id="node-glow"><stop stop-color="#d5f478" stop-opacity=".12"/><stop offset="1" stop-color="#d5f478" stop-opacity="0"/></radialGradient></defs><circle cx="210" cy="130" r="90" fill="url(#node-glow)"/>${signals
     .map((s) => {
@@ -393,7 +466,8 @@ async function refresh() {
   error("");
   $("#reset-filters").classList.toggle(
     "hidden",
-    JSON.stringify(filters()) === JSON.stringify({ period: "30", source: "all", department: "all" }),
+    JSON.stringify(filters()) ===
+      JSON.stringify({ period: "30", source: "all", department: "all" }),
   );
   try {
     const data = await api("/api/dashboard?" + params(filters()));
@@ -408,7 +482,8 @@ async function refresh() {
         d.setUTCDate(d.getUTCDate() - Number(filters().period) + 1);
         start = d.toISOString().slice(0, 10);
       }
-      $("#date-range").textContent = `${shortDate(start)} – ${shortDate(end)}, ${end.slice(0, 4)} · UTC`;
+      $("#date-range").textContent =
+        `${shortDate(start)} – ${shortDate(end)}, ${end.slice(0, 4)} · UTC`;
     }
     if (state.view === "events") await loadEvents();
   } catch (e) {
@@ -419,7 +494,9 @@ async function switchView(view) {
   if (!views[view]) return;
   state.view = view;
   const [title, heading, description, eyebrow] = views[view];
-  $$(".view").forEach((el) => el.classList.toggle("active", el.id === "view-" + view));
+  $$(".view").forEach((el) =>
+    el.classList.toggle("active", el.id === "view-" + view),
+  );
   $$(".nav-item").forEach((el) => {
     const active = el.dataset.view === view;
     el.classList.toggle("active", active);
@@ -431,7 +508,10 @@ async function switchView(view) {
   $("#page-description").textContent = description;
   $(".page-heading .eyebrow").textContent = eyebrow;
   $("#ask-top").classList.toggle("hidden", view === "assistant");
-  $(".filterbar").classList.toggle("hidden", ["quality", "cases"].includes(view));
+  $(".filterbar").classList.toggle(
+    "hidden",
+    ["quality", "cases"].includes(view),
+  );
   history.replaceState(null, "", "#" + view);
   error("");
   try {
@@ -444,12 +524,16 @@ async function switchView(view) {
 }
 async function loadEvents() {
   const sequence = ++state.eventSequence;
-  const data = await api("/api/events?" + params({ ...eventFilters(), page: state.page }));
+  const data = await api(
+    "/api/events?" + params({ ...eventFilters(), page: state.page }),
+  );
   if (sequence !== state.eventSequence) return;
   state.pages = data.pages;
   $("#event-rows").innerHTML = data.rows.length
     ? data.rows.map(eventRow).join("")
-    : '<tr><td colspan="6">' + empty("Try another search or clear your filters.") + "</td></tr>";
+    : '<tr><td colspan="6">' +
+      empty("Try another search or clear your filters.") +
+      "</td></tr>";
   $("#event-total").textContent = `${fmt(data.total)} matching events`;
   $("#page-number").textContent = `${data.page} / ${fmt(data.pages)}`;
   $("#prev-page").disabled = data.page <= 1;
@@ -469,7 +553,12 @@ async function openHost(hostname, override = null) {
     `<div class="drawer-header"><h2>${esc(hostname)}</h2><button class="icon-button close-dialog" aria-label="Close investigation">${icon("x")}</button></div><div class="empty">Loading connected evidence…</div>`,
   );
   try {
-    const data = await api("/api/investigate/" + encodeURIComponent(hostname) + "?" + params(hostArgs));
+    const data = await api(
+      "/api/investigate/" +
+        encodeURIComponent(hostname) +
+        "?" +
+        params(hostArgs),
+    );
     if (state.host !== hostname) return;
     state.hostData = data;
     const identity = data.identity[0],
@@ -539,7 +628,9 @@ async function openEvent(id) {
 }
 async function loadCases() {
   const data = await api("/api/cases");
-  $("#case-count").textContent = data.rows.filter((r) => r.status !== "Closed").length;
+  $("#case-count").textContent = data.rows.filter(
+    (r) => r.status !== "Closed",
+  ).length;
   $("#case-list").innerHTML = data.rows.length
     ? data.rows
         .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
@@ -559,8 +650,16 @@ async function loadQuality() {
   $("#quality-content").innerHTML = `<div class="metrics quality-metrics">${[
     ["Source records", q.raw_rows, "Across four supplied files"],
     ["Clean records", q.clean_rows, "Including the identity master"],
-    ["Duplicate / key removals", removed, "Deterministic primary-key deduplication"],
-    ["Flagged telemetry", q.flagged_events, "One or more unresolved quality flags"],
+    [
+      "Duplicate / key removals",
+      removed,
+      "Deterministic primary-key deduplication",
+    ],
+    [
+      "Flagged telemetry",
+      q.flagged_events,
+      "One or more unresolved quality flags",
+    ],
   ]
     .map(
       ([title, value, note]) =>
@@ -578,13 +677,18 @@ async function loadQuality() {
       ([ico, title, desc], i) =>
         `${i ? '<span class="pipeline-arrow">' + icon("arrow-right") + "</span>" : ""}<div class="pipeline-stage">${icon(ico)}<strong>${title}</strong><small>${desc}</small></div>`,
     )
-    .join("")}</div></article><div class="quality-sources" style="margin-top:18px">${q.sources
+    .join(
+      "",
+    )}</div></article><div class="quality-sources" style="margin-top:18px">${q.sources
     .map(
       (s) =>
         `<article class="card quality-source"><h3>${esc(sourceNames[s.source] || "Identity & asset master")}</h3><p>${esc(s.file)}</p><div class="source-counts"><div><strong>${fmt(s.raw)}</strong><small>source rows</small></div><div><strong class="lime">${fmt(s.clean)}</strong><small>clean rows</small></div><div><strong>${fmt(s.duplicates)}</strong><small>duplicates removed</small></div></div><details><summary>Inspect field transformations</summary><table class="quality-table"><thead><tr><th>FIELD</th><th>CHANGED</th><th>SET TO NULL</th></tr></thead><tbody>${Object.keys(
           s.changed,
         )
-          .map((k) => `<tr><td>${esc(k)}</td><td>${fmt(s.changed[k])}</td><td>${fmt(s.invalid[k])}</td></tr>`)
+          .map(
+            (k) =>
+              `<tr><td>${esc(k)}</td><td>${fmt(s.changed[k])}</td><td>${fmt(s.invalid[k])}</td></tr>`,
+          )
           .join(
             "",
           )}</tbody></table><p class="source-note">Counts measured before deduplication. Changed includes type and format normalization. ${fmt(s.missing_ids)} rows removed for missing primary keys.</p></details><details><summary>Source fingerprint · SHA-256</summary><pre>${esc(s.sha256)}</pre></details></article>`,
@@ -593,42 +697,87 @@ async function loadQuality() {
       "",
     )}</div><article class="card quality-policies"><h2>The gaps are part of the story.</h2><p><strong class="lime">${fmt(q.invalid_resolutions)} impossible resolution timestamps</strong> were cleared and explicitly flagged; they are excluded from resolution-time metrics. <strong class="lime">${fmt(q.unmatched_events)} telemetry events</strong> could not be matched to an identity. They remain available for investigation.</p><p>${esc(q.timestamp_policy)}</p><p>Master identity departments take precedence over telemetry labels. Unsupported numeric risk labels remain null; IAM event-based fallback scores are flagged. The application does not infer missing IP addresses, invent identities, or treat host correlation as causation.</p><p class="source-note">Last pipeline build: ${esc(q.built_at)} · Run <code>python pipeline.py</code> to rebuild from source.</p></article>`;
 }
+function resultTable(rows) {
+  if (!rows.length)
+    return '<p class="chart-empty">No matching records in this scope.</p>';
+  const columns = Object.keys(rows[0]).filter((key) => key !== "label");
+  return `<div class="table-scroll" tabindex="0" role="region" aria-label="Retrieved data"><table><thead><tr>${columns.map((key) => `<th>${esc(key.replaceAll("_", " "))}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${columns.map((key) => `<td>${key === "id" ? `<button class="text-button" data-event="${esc(row[key])}">${esc(row[key])}</button>` : esc(row[key])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+function answerText(text, data, prefix) {
+  return esc(text)
+    .replace(/\[([QE]\d+)\]/g, (match, citation) => {
+      const event = data.evidence.find((row) => row.citation === citation);
+      if (event)
+        return `<button class="citation" data-event="${esc(event.id)}" aria-label="Open evidence ${citation}">${citation}</button>`;
+      if (data.queries.some((row) => row.citation === citation))
+        return `<button class="citation" data-result-target="${prefix}-${citation}" aria-label="Inspect query ${citation}">${citation}</button>`;
+      return match;
+    })
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+}
 async function ask(question) {
   const button = $("#ask-form button");
   if (button.disabled) return;
   button.disabled = true;
   $("#question").value = question;
   const result = document.createElement("article");
+  const prefix = `answer-${Date.now()}`;
   result.className = "agent-result";
-  result.innerHTML = `<div class="question-bubble">${esc(question)}</div><div class="agent-busy">${icon("sparkles")}Reading the evidence and preparing your chart…</div>`;
+  result.setAttribute("aria-busy", "true");
+  result.innerHTML = `<div class="question-bubble">${esc(question)}</div><div class="agent-busy">${icon("sparkles")}Retrieving relevant data and checking the evidence…</div>`;
   $("#agent-results").append(result);
   $(".agent-welcome").classList.add("hidden");
   try {
-    const data = await post("/api/ask", { question, ...filters() });
-    result.innerHTML = `<div class="question-bubble">${esc(question)}</div><div class="answer-engine">${icon("sparkles")}${esc(data.engine)}</div><h3>${esc(data.title)}</h3><p>${esc(data.answer)}</p>${data.warning ? `<div class="info-note">${esc(data.warning)}</div>` : ""}<div class="answer-chart">${data.chart === "line" ? lineChart(data.rows, "value", null) : bars(data.rows)}</div><details><summary>Inspect SQL & scope</summary><pre>${esc(data.sql)}\n\nParameters: ${esc(JSON.stringify(data.parameters))}\nFilters: ${esc(JSON.stringify(data.scope))}</pre></details><p class="answer-note">${esc(data.note)}</p><button class="text-button chart-download">${icon("download")}Download answer data</button>`;
-    $(".chart-download", result).addEventListener("click", () => downloadJson(data));
+    const data = await post("/api/ask", {
+      question,
+      history: state.history.slice(-8),
+      ...filters(),
+    });
+    state.history.push(
+      { role: "user", content: question },
+      { role: "assistant", content: data.answer },
+    );
+    state.history = state.history.slice(-8);
+    result.innerHTML = `<div class="question-bubble">${esc(question)}</div><div class="answer-engine">${icon("sparkles")}${esc(data.engine)}</div><h3>${esc(data.title)}</h3><div class="answer-prose">${answerText(data.answer, data, prefix)}</div>${data.queries.map((query) => `<section class="retrieved-query" id="${prefix}-${query.citation}"><h4><span class="citation">${esc(query.citation)}</span>${esc(query.title)}</h4>${query.rows.length && ["bar", "line"].includes(query.chart) ? `<div class="answer-chart">${query.chart === "line" ? lineChart(query.rows, "value", null) : bars(query.rows)}</div>` : resultTable(query.rows)}<details><summary>Inspect data & query</summary>${resultTable(query.rows)}<pre>${esc(query.sql)}\n\nParameters: ${esc(JSON.stringify(query.parameters))}</pre><p>Up to ${esc(query.limit)} result rows.</p></details></section>`).join("")}${data.evidence.length ? `<details class="evidence-sources"><summary>${data.evidence.length} source examples</summary><div class="evidence-list">${data.evidence.map((event) => `<button data-event="${esc(event.id)}"><span class="citation">${esc(event.citation)}</span><span><strong>${esc(event.kind)}</strong><small>${esc(event.hostname)} · ${esc(event.timestamp)} · ${esc(event.id)}</small></span>${icon("arrow-up-right")}</button>`).join("")}</div></details>` : ""}${data.queries.length ? `<p class="answer-note">${esc(data.note)} Scope: ${esc(JSON.stringify(data.scope))}</p><button class="text-button chart-download">${icon("download")}Download answer data</button>` : ""}`;
+    $(".chart-download", result)?.addEventListener("click", () =>
+      downloadJson(data),
+    );
     $("#question").value = "";
   } catch (e) {
     result.innerHTML = `<div class="question-bubble">${esc(question)}</div><div class="info-note">${icon("info")}${esc(e.message)}</div>`;
   } finally {
+    result.setAttribute("aria-busy", "false");
     button.disabled = false;
     result.scrollIntoView({
-      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-      block: "nearest",
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+      block: "start",
     });
     $("#question").focus({ preventScroll: true });
   }
 }
 function downloadJson(data) {
-  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+  const url = URL.createObjectURL(
+    new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }),
+  );
   const a = document.createElement("a");
   a.href = url;
-  a.download = "sentinel-answer.json";
+  a.download = "sentinaliq-answer.json";
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 document.addEventListener("click", async (e) => {
+  const citation = e.target.closest("[data-result-target]");
+  if (citation) {
+    const target = document.getElementById(citation.dataset.resultTarget);
+    target?.scrollIntoView({ block: "start", behavior: "instant" });
+    const details = target?.querySelector("details");
+    if (details) details.open = true;
+    target?.querySelector("summary")?.focus({ preventScroll: true });
+    return;
+  }
   const view = e.target.closest("[data-view]");
   if (view) {
     await switchView(view.dataset.view);
@@ -648,7 +797,11 @@ document.addEventListener("click", async (e) => {
   }
   const saved = e.target.closest("[data-case-host]");
   if (saved) {
-    await openHost(saved.dataset.caseHost, { period: "all", source: "all", department: "all" });
+    await openHost(saved.dataset.caseHost, {
+      period: "all",
+      source: "all",
+      department: "all",
+    });
     return;
   }
   const host = e.target.closest("[data-host]");
@@ -670,16 +823,21 @@ document.addEventListener("click", async (e) => {
   if (source) {
     if (source.closest("#investigation-dialog") && state.hostData) {
       $("#timeline").innerHTML = timelineHtml(
-        state.hostData.timeline.filter((r) => r.source === source.dataset.focusSource),
+        state.hostData.timeline.filter(
+          (r) => r.source === source.dataset.focusSource,
+        ),
       );
       $("#timeline").scrollIntoView({ block: "start" });
-    } else if (state.data?.hosts[0]) await openHost(state.data.hosts[0].hostname);
+    } else if (state.data?.hosts[0])
+      await openHost(state.data.hosts[0].hostname);
     return;
   }
   if (e.target.closest("#all-timeline") && state.hostData)
     $("#timeline").innerHTML = timelineHtml(state.hostData.timeline);
 });
-$("#ask-top").addEventListener("click", () => switchView("assistant").then(() => $("#question").focus()));
+$("#ask-top").addEventListener("click", () =>
+  switchView("assistant").then(() => $("#question").focus()),
+);
 $("#ask-form").addEventListener("submit", (e) => {
   e.preventDefault();
   ask($("#question").value.trim());
@@ -702,13 +860,14 @@ $("#export").addEventListener("click", async () => {
   button.disabled = true;
   try {
     const response = await fetch(
-      "/api/export?" + params(state.view === "events" ? eventFilters() : filters()),
+      "/api/export?" +
+        params(state.view === "events" ? eventFilters() : filters()),
     );
     if (!response.ok) throw new Error("Export failed. Please retry.");
     const url = URL.createObjectURL(await response.blob());
     const a = document.createElement("a");
     a.href = url;
-    a.download = "sentinel-evidence.csv";
+    a.download = "sentinaliq-evidence.csv";
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     toast("Evidence export downloaded");
@@ -755,20 +914,24 @@ const focusSearch = async () => {
 $("#shortcuts").addEventListener("click", focusSearch);
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
-  const label = theme === "light" ? "Switch to dark mode" : "Switch to light mode";
+  const label =
+    theme === "light" ? "Switch to dark mode" : "Switch to light mode";
   const button = $("#theme-toggle");
   button.innerHTML = icon(theme === "light" ? "moon" : "sun");
   button.setAttribute("aria-label", label);
   button.title = label;
-  $('meta[name="theme-color"]').content = theme === "light" ? "#f4f5f0" : "#10120f";
+  $('meta[name="theme-color"]').content =
+    theme === "light" ? "#f4f5f0" : "#10120f";
   try {
-    localStorage.setItem("sentinel-theme", theme);
+    localStorage.setItem("sentinaliq-theme", theme);
   } catch {
     /* Theme still works without browser storage. */
   }
 }
 $("#theme-toggle").addEventListener("click", () =>
-  applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light"),
+  applyTheme(
+    document.documentElement.dataset.theme === "light" ? "dark" : "light",
+  ),
 );
 
 // The tour visits real screens and spotlights controls without changing filters or saved work.
@@ -819,8 +982,8 @@ const tourSteps = [
     "assistant",
     "#ask-form",
     "Ask a question in plain language",
-    "Try “Show failed logins by department” or “Show daily trend of critical endpoint alerts.” Sentinel gives you a chart and an answer based on your filters.",
-    "You can inspect the query behind the answer. Unsupported questions get an explanation instead of a guess.",
+    "Try “Show failed logins by department” or “Show daily trend of critical endpoint alerts.” SentinalIQ gives you a chart and an answer based on your filters.",
+    "Open a citation to inspect query results or source events. Ask a follow-up to explore the same finding further.",
   ],
   [
     "quality",
@@ -837,7 +1000,14 @@ const tourSteps = [
     "You’re ready to explore. You can restart this tour any time from Dashboard tour.",
   ],
 ];
-const tour = { index: 0, origin: "overview", scroll: 0, opener: null, target: null, version: 0 };
+const tour = {
+  index: 0,
+  origin: "overview",
+  scroll: 0,
+  opener: null,
+  target: null,
+  version: 0,
+};
 function positionTour() {
   if (!$("#tour-dialog").open || !tour.target?.isConnected) return;
   const width = document.documentElement.clientWidth,
@@ -848,7 +1018,10 @@ function positionTour() {
     y = Math.max(6, bounds.top - pad);
   const right = Math.min(width - 6, bounds.right + pad),
     bottom = Math.min(height - 6, bounds.bottom + pad);
-  $("#tour-mask").setAttribute("d", `M0 0H${width}V${height}H0Z M${x} ${y}H${right}V${bottom}H${x}Z`);
+  $("#tour-mask").setAttribute(
+    "d",
+    `M0 0H${width}V${height}H0Z M${x} ${y}H${right}V${bottom}H${x}Z`,
+  );
   Object.assign($(".tour-focus").style, {
     left: x + "px",
     top: y + "px",
@@ -877,8 +1050,10 @@ async function showTourStep(index) {
   const [view, selector, title, description, tip] = tourSteps[index];
   await switchView(view);
   if (!$("#tour-dialog").open || version !== tour.version) return;
-  tour.target = $(selector) || $("#view-" + view + " .card") || $(".page-heading");
-  $("#tour-progress").textContent = `YOUR DASHBOARD, EXPLAINED · ${index + 1} / ${tourSteps.length}`;
+  tour.target =
+    $(selector) || $("#view-" + view + " .card") || $(".page-heading");
+  $("#tour-progress").textContent =
+    `YOUR DASHBOARD, EXPLAINED · ${index + 1} / ${tourSteps.length}`;
   $("#tour-title").textContent = title;
   $("#tour-description").textContent = description;
   $("#tour-tip").textContent = tip;
@@ -887,7 +1062,9 @@ async function showTourStep(index) {
     .join("");
   $("#tour-back").disabled = index === 0;
   $("#tour-next").innerHTML =
-    index === tourSteps.length - 1 ? `Finish tour${icon("check")}` : `Next step${icon("arrow-right")}`;
+    index === tourSteps.length - 1
+      ? `Finish tour${icon("check")}`
+      : `Next step${icon("arrow-right")}`;
   $("#tour-next").disabled = false;
   tour.target.scrollIntoView({ block: "center", behavior: "instant" });
   requestAnimationFrame(() => {
@@ -909,7 +1086,9 @@ async function startTour(event) {
 $("#tour-start").addEventListener("click", startTour);
 $("#tour-mobile").addEventListener("click", startTour);
 $("#tour-next").addEventListener("click", () =>
-  tour.index === tourSteps.length - 1 ? $("#tour-dialog").close() : showTourStep(tour.index + 1),
+  tour.index === tourSteps.length - 1
+    ? $("#tour-dialog").close()
+    : showTourStep(tour.index + 1),
 );
 $("#tour-back").addEventListener("click", () => {
   if (tour.index > 0) showTourStep(tour.index - 1);
@@ -937,7 +1116,12 @@ $$("dialog").forEach((dialog) =>
   dialog.addEventListener("click", (e) => {
     if (e.target === dialog) {
       const r = dialog.getBoundingClientRect();
-      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)
+      if (
+        e.clientX < r.left ||
+        e.clientX > r.right ||
+        e.clientY < r.top ||
+        e.clientY > r.bottom
+      )
         dialog.close();
     }
   }),
