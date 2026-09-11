@@ -191,6 +191,14 @@ def test_agent_scope_and_unsupported_question(client):
     ).json
     assert result["scope"]["department"] == "Finance"
     assert result["scope"]["period"] == "all"
+    result = client.post(
+        "/api/ask", json={"question": "Show failed logins by department in Finance"}
+    ).json
+    assert result["scope"]["department"] == "Finance"
+    result = client.post(
+        "/api/ask", json={"question": "Show it as a daily telemetry volume chart"}
+    ).json
+    assert "department" not in result["scope"]
 
 
 def test_model_failure_is_visible_and_falls_back(client, monkeypatch):
@@ -228,6 +236,10 @@ def test_case_notes_persist_without_mutating_telemetry(client, monkeypatch, tmp_
     )
     assert (
         client.post("/api/cases", json={**payload, "hostname": "missing"}).status_code
+        == 400
+    )
+    assert (
+        client.post("/api/cases", json={**payload, "status": ["Watching"]}).status_code
         == 400
     )
 

@@ -454,19 +454,23 @@ def ask():
         args["period"] = days.group(1)
     if "all time" in question.lower():
         args["period"] = "all"
-    if "department" not in question.lower():
-        departments = query(
-            "SELECT DISTINCT department FROM events WHERE department!='Unknown'"
+    departments = query(
+        "SELECT DISTINCT department FROM events WHERE department!='Unknown'"
+    )
+    named = [
+        r["department"]
+        for r in departments
+        if re.search(
+            r"\b" + re.escape(r["department"].lower()) + r"\b", question.lower()
         )
-        named = [
-            r["department"]
-            for r in departments
-            if re.search(
-                r"\b" + re.escape(r["department"].lower()) + r"\b", question.lower()
-            )
-        ]
-        if len(named) == 1:
-            args["department"] = named[0]
+        and (r["department"] != "IT" or re.search(r"\bIT\b", question))
+    ]
+    if len(named) > 1:
+        return jsonify(
+            error="Use the department comparison question with All departments, or select one department in the filters."
+        ), 422
+    if named:
+        args["department"] = named[0]
     title, chart, group, condition = QUESTIONS[intent]
     sql = (
         f"SELECT {group} AS label, count(*) AS value FROM events WHERE {{where}} AND {condition} GROUP BY 1 ORDER BY "
