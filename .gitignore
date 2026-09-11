@@ -2,7 +2,10 @@
 __pycache__/
 .pytest_cache/
 .env
-data/
+data/*
+!data/sentinel.duckdb
+!data/quality.json
+!data/cases.sqlite
 output/
 node_modules/
 *.log
