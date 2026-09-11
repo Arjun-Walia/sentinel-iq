@@ -1,5 +1,11 @@
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+try {
+  document.documentElement.dataset.theme =
+    localStorage.getItem("sentinel-theme") === "dark" ? "dark" : "light";
+} catch {
+  document.documentElement.dataset.theme = "light";
+}
 const esc = (value) =>
   String(value ?? "—").replace(
     /[&<>"']/g,
@@ -17,6 +23,9 @@ const colors = {
 };
 const sourceNames = { iam: "Identity & access", firewall: "Firewall", endpoint: "Endpoint" };
 const paths = {
+  moon: "M21 13a9 9 0 0 1-10-10A9 9 0 1 0 21 13Z",
+  sun: "M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5",
+  compass: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0m-6-3-2 6-6 2 2-6 6-2Z",
   overview: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
   activity: "M2 12h4l3-8 5 16 3-8h5",
   network: "M12 8v5M6 17l6-4 6 4 M9 2h6v6H9z M2 17h7v5H2z M15 17h7v5h-7z",
@@ -744,7 +753,178 @@ const focusSearch = async () => {
   $("#event-search").focus();
 };
 $("#shortcuts").addEventListener("click", focusSearch);
-$("#about-button").addEventListener("click", () => $("#about-dialog").showModal());
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  const label = theme === "light" ? "Switch to dark mode" : "Switch to light mode";
+  const button = $("#theme-toggle");
+  button.innerHTML = icon(theme === "light" ? "moon" : "sun");
+  button.setAttribute("aria-label", label);
+  button.title = label;
+  $('meta[name="theme-color"]').content = theme === "light" ? "#f4f5f0" : "#10120f";
+  try {
+    localStorage.setItem("sentinel-theme", theme);
+  } catch {
+    /* Theme still works without browser storage. */
+  }
+}
+$("#theme-toggle").addEventListener("click", () =>
+  applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light"),
+);
+
+// The tour visits real screens and spotlights controls without changing filters or saved work.
+const tourSteps = [
+  [
+    "overview",
+    "#metrics",
+    "Your security picture, in four numbers",
+    "An event is one recorded action, such as a login or a firewall decision. A host is a device. High-risk signals need a closer look; they are not proof of an attack.",
+    "Start with high-risk signals and open alerts to see what needs attention.",
+  ],
+  [
+    "overview",
+    ".filterbar",
+    "Choose what you want to look at",
+    "Use these filters to choose a time range, data source, or department. The dashboard updates together, so every chart tells the same story.",
+    "Last 30 days ends at the latest date in the dataset, not today. All time also includes events with missing dates.",
+  ],
+  [
+    "overview",
+    ".activity-card",
+    "See when activity changes",
+    "This chart compares all recorded events with the high-risk ones. A rise is a reason to investigate what happened, not an automatic alarm.",
+    "Hover over the chart to see the counts for a particular day.",
+  ],
+  [
+    "overview",
+    ".priority-card",
+    "Pick a device to investigate",
+    "This card brings together failed sign-ins, endpoint alerts, and flagged network activity for one host. Seeing them together gives you more context.",
+    "Investigate this host opens a timeline. From there, save your notes and a status.",
+  ],
+  [
+    "events",
+    ".explorer-controls",
+    "Find the exact event",
+    "Search for a device, person, event ID, or alert name. Use severity to narrow the list. The arrow on a row opens its cleaned source record.",
+    "Export data downloads every matching row, not just the current page.",
+  ],
+  [
+    "graph",
+    "#host-list .host-row",
+    "Connect the evidence",
+    "A host can appear in login records, endpoint alerts, and firewall logs. This list helps you find devices with signals from several sources.",
+    "Open a host, then click a source circle to focus its timeline. A connection is an observation, not a confirmed attack.",
+  ],
+  [
+    "assistant",
+    "#ask-form",
+    "Ask a question in plain language",
+    "Try “Show failed logins by department” or “Show daily trend of critical endpoint alerts.” Sentinel gives you a chart and an answer based on your filters.",
+    "You can inspect the query behind the answer. Unsupported questions get an explanation instead of a guess.",
+  ],
+  [
+    "quality",
+    ".quality-pipeline",
+    "Understand how the data was cleaned",
+    "The original files contain duplicates, inconsistent labels, and missing values. This page shows what was fixed and what still needs attention.",
+    "Open a source’s field transformations to inspect the changes. Missing information is kept visible.",
+  ],
+  [
+    "cases",
+    "#view-cases .card-heading",
+    "Keep track of what you found",
+    "Investigations is your saved work queue. Open a host, add a note, and choose Watching, Investigating, or Closed. Your notes stay here after a reload.",
+    "You’re ready to explore. You can restart this tour any time from Dashboard tour.",
+  ],
+];
+const tour = { index: 0, origin: "overview", scroll: 0, opener: null, target: null, version: 0 };
+function positionTour() {
+  if (!$("#tour-dialog").open || !tour.target?.isConnected) return;
+  const width = document.documentElement.clientWidth,
+    height = innerHeight;
+  const bounds = tour.target.getBoundingClientRect(),
+    pad = 7;
+  const x = Math.max(6, bounds.left - pad),
+    y = Math.max(6, bounds.top - pad);
+  const right = Math.min(width - 6, bounds.right + pad),
+    bottom = Math.min(height - 6, bounds.bottom + pad);
+  $("#tour-mask").setAttribute("d", `M0 0H${width}V${height}H0Z M${x} ${y}H${right}V${bottom}H${x}Z`);
+  Object.assign($(".tour-focus").style, {
+    left: x + "px",
+    top: y + "px",
+    width: Math.max(0, right - x) + "px",
+    height: Math.max(0, bottom - y) + "px",
+  });
+  const card = $(".tour-card"),
+    cardHeight = card.offsetHeight,
+    cardWidth = card.offsetWidth;
+  const top =
+    bottom + cardHeight + 22 < height
+      ? bottom + 16
+      : y - cardHeight - 16 > 8
+        ? y - cardHeight - 16
+        : height - cardHeight - 16;
+  Object.assign(card.style, {
+    left: Math.max(12, Math.min(x, width - cardWidth - 12)) + "px",
+    top: Math.max(12, top) + "px",
+  });
+}
+async function showTourStep(index) {
+  const version = ++tour.version;
+  tour.index = index;
+  $("#tour-next").disabled = true;
+  $("#tour-back").disabled = true;
+  const [view, selector, title, description, tip] = tourSteps[index];
+  await switchView(view);
+  if (!$("#tour-dialog").open || version !== tour.version) return;
+  tour.target = $(selector) || $("#view-" + view + " .card") || $(".page-heading");
+  $("#tour-progress").textContent = `YOUR DASHBOARD, EXPLAINED · ${index + 1} / ${tourSteps.length}`;
+  $("#tour-title").textContent = title;
+  $("#tour-description").textContent = description;
+  $("#tour-tip").textContent = tip;
+  $(".tour-dots").innerHTML = tourSteps
+    .map((_, i) => `<span class="${i === index ? "current" : ""}"></span>`)
+    .join("");
+  $("#tour-back").disabled = index === 0;
+  $("#tour-next").innerHTML =
+    index === tourSteps.length - 1 ? `Finish tour${icon("check")}` : `Next step${icon("arrow-right")}`;
+  $("#tour-next").disabled = false;
+  tour.target.scrollIntoView({ block: "center", behavior: "instant" });
+  requestAnimationFrame(() => {
+    positionTour();
+    $("#tour-next").focus({ preventScroll: true });
+  });
+}
+async function startTour(event) {
+  if (!state.data) {
+    toast("The dashboard is still loading. Please try again in a moment.");
+    return;
+  }
+  tour.origin = state.view;
+  tour.scroll = scrollY;
+  tour.opener = event.currentTarget;
+  $("#tour-dialog").showModal();
+  await showTourStep(0);
+}
+$("#tour-start").addEventListener("click", startTour);
+$("#tour-mobile").addEventListener("click", startTour);
+$("#tour-next").addEventListener("click", () =>
+  tour.index === tourSteps.length - 1 ? $("#tour-dialog").close() : showTourStep(tour.index + 1),
+);
+$("#tour-back").addEventListener("click", () => {
+  if (tour.index > 0) showTourStep(tour.index - 1);
+});
+["tour-close", "tour-skip"].forEach((id) =>
+  $("#" + id).addEventListener("click", () => $("#tour-dialog").close()),
+);
+$("#tour-dialog").addEventListener("close", async () => {
+  ++tour.version;
+  await switchView(tour.origin);
+  window.scrollTo({ top: tour.scroll, behavior: "instant" });
+  tour.opener?.focus({ preventScroll: true });
+});
+window.addEventListener("resize", positionTour);
+window.addEventListener("scroll", positionTour, { passive: true });
 document.addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
     e.preventDefault();
@@ -764,6 +944,7 @@ $$("dialog").forEach((dialog) =>
 );
 async function initialize() {
   icons();
+  applyTheme(document.documentElement.dataset.theme);
   try {
     state.meta = await api("/api/meta");
     $("#department").innerHTML =

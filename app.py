@@ -99,7 +99,7 @@ def meta():
             r["department"]
             for r in query("SELECT DISTINCT department FROM events ORDER BY 1")
         ],
-        agent="DeepSeek" if os.getenv("DEEPSEEK_API_KEY") else "Local query engine",
+        agent="DeepSeek V4 Flash · RAG selector" if os.getenv("DEEPSEEK_API_KEY") else "Local query engine",
         synthetic=True,
     )
 
@@ -406,14 +406,15 @@ def ask():
         ), 422
     intent, engine, warning = local_intent(question), "Local query engine", None
     if os.getenv("DEEPSEEK_API_KEY"):
-        # Retrieve a small question catalog; the model selects a template, never executes SQL.
+        # Retrieve the closest supported question templates; the model selects one and never executes SQL.
         catalog = {k: v[0] for k, v in QUESTIONS.items()}
         try:
             response = requests.post(
                 "https://api.deepseek.com/chat/completions",
                 headers={"Authorization": "Bearer " + os.environ["DEEPSEEK_API_KEY"]},
                 json={
-                    "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+                    "model": os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash"),
+                    "thinking": {"type": "disabled"},
                     "response_format": {"type": "json_object"},
                     "max_tokens": 150,
                     "messages": [

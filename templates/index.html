@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -45,14 +45,13 @@
         </button>
       </nav>
       <div class="sidebar-bottom">
-        <div class="pipeline-live">
-          <span class="status-dot"></span>4 connected data sources<small
-            >Unified. Validated. Query-ready.</small
+        <button class="tour-launch" id="tour-start" aria-label="Start dashboard tour">
+          <span class="tour-launch-icon"><i data-icon="compass"></i></span>
+          <span
+            ><small class="tour-kicker">START HERE</small><strong>Dashboard tour</strong
+            ><small>A simple walkthrough</small></span
           >
-        </div>
-        <button class="analyst" id="about-button">
-          <span class="avatar">SA</span><span>SOC Analyst<small>Analyst workspace</small></span
-          ><i data-icon="settings"></i>
+          <i data-icon="arrow-up-right"></i>
         </button>
       </div>
     </aside>
@@ -71,7 +70,23 @@
             aria-label="Search events"
           >
             <i data-icon="search"></i></button
-          ><span class="divider"></span><span class="avatar small">SA</span>
+          ><span class="divider"></span>
+          <button
+            class="icon-button mobile-tour"
+            id="tour-mobile"
+            aria-label="Start dashboard tour"
+            title="Dashboard tour"
+          >
+            <i data-icon="compass"></i>
+          </button>
+          <button
+            class="icon-button theme-toggle"
+            id="theme-toggle"
+            aria-label="Switch to dark mode"
+            title="Switch to dark mode"
+          >
+            <i data-icon="moon"></i>
+          </button>
         </div>
       </header>
       <main id="main" tabindex="-1">
@@ -408,21 +423,27 @@
       </main>
     </div>
     <dialog id="investigation-dialog" aria-labelledby="drawer-title"><div id="drawer-content"></div></dialog>
-    <dialog id="about-dialog" aria-labelledby="about-title">
-      <div class="about-content">
-        <button class="icon-button close-dialog" aria-label="Close information"><i data-icon="x"></i></button
-        ><img src="/static/mark.svg" alt="" width="48" />
-        <h2 id="about-title">Sentinel IQ</h2>
-        <p>A compact security intelligence workspace built for the TransOrg AgentIQ Datathon.</p>
-        <p>
-          All data is synthetic. This application analyzes a fixed dataset; it does not monitor a live
-          network. Risk scores are prioritization signals, not probabilities of compromise.
-        </p>
-        <p>
-          Dates are scoped relative to the latest event. Cases and notes are saved locally in this shared
-          analyst workspace.
-        </p>
-        <button class="button primary close-dialog">Back to workspace</button>
+    <dialog id="tour-dialog" aria-labelledby="tour-title" aria-describedby="tour-description">
+      <svg class="tour-shade" aria-hidden="true"><path id="tour-mask" fill-rule="evenodd" /></svg>
+      <div class="tour-focus" aria-hidden="true"></div>
+      <div class="tour-card">
+        <div class="tour-header">
+          <span class="eyebrow" id="tour-progress"></span
+          ><button class="icon-button" id="tour-close" aria-label="Close dashboard tour">
+            <i data-icon="x"></i>
+          </button>
+        </div>
+        <div id="tour-copy" aria-live="polite">
+          <h2 id="tour-title"></h2>
+          <p id="tour-description"></p>
+        </div>
+        <p class="tour-tip" id="tour-tip"></p>
+        <div class="tour-dots" aria-hidden="true"></div>
+        <div class="tour-actions">
+          <button class="text-button" id="tour-back">Back</button
+          ><button class="text-button" id="tour-skip">Skip tour</button
+          ><button class="button primary" id="tour-next">Next step<i data-icon="arrow-right"></i></button>
+        </div>
       </div>
     </dialog>
     <div id="toast" class="toast hidden" role="status"></div>

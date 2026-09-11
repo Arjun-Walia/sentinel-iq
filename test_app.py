@@ -215,6 +215,28 @@ def test_model_failure_is_visible_and_falls_back(client, monkeypatch):
     assert result["warning"]
 
 
+def test_deepseek_flash_model_configuration(client, monkeypatch):
+    from types import SimpleNamespace
+
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-only")
+    monkeypatch.delenv("DEEPSEEK_MODEL", raising=False)
+    calls = []
+
+    def respond(url, **kwargs):
+        calls.append(kwargs["json"])
+        return SimpleNamespace(
+            raise_for_status=lambda: None,
+            json=lambda: {"choices": [{"message": {"content": '{"intent":"severity"}'}}]},
+        )
+
+    monkeypatch.setattr(server.requests, "post", respond)
+    response = client.post("/api/ask", json={"question": "Endpoint alerts by severity"})
+    assert response.status_code == 200
+    assert calls[0]["model"] == "deepseek-v4-flash"
+    assert calls[0]["thinking"] == {"type": "disabled"}
+    assert response.json["rows"]
+
+
 def test_case_notes_persist_without_mutating_telemetry(client, monkeypatch, tmp_path):
     monkeypatch.setattr(server, "DATA", tmp_path)
     server.initialize()

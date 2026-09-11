@@ -135,7 +135,7 @@ Show activity of inactive identities
 
 The local engine selects from ten transparent query templates. Optional DeepSeek chooses an intent from the same catalog; SQL execution remains parameterized and read-only. This is a bounded analytical assistant, not unrestricted text-to-SQL or a vector RAG implementation. Unsupported questions receive an explicit response. Comparisons produce bar charts; daily series produce line charts. Results are limited to 60 groups, with scope and parameters included.
 
-Copy `.env.example` to `.env` and set `DEEPSEEK_API_KEY` to enable model-assisted selection. `DEEPSEEK_MODEL` is configurable. Only the user's question and analytical catalog are sent; raw telemetry stays local. Provider failures are reported visibly with local fallback. Live DeepSeek calls have not been verified without a key; timeout/fallback behavior is tested.
+Copy `.env.example` to `.env` and set `DEEPSEEK_API_KEY` to enable model-assisted retrieval and intent selection. The configured model is **DeepSeek V4 Flash** (`deepseek-v4-flash`); `DEEPSEEK_MODEL` remains configurable. Only the user's question and the retrieved analytical catalog are sent; raw telemetry stays local. Provider failures are reported visibly with local fallback. Live DeepSeek calls have not been verified without a key; timeout/fallback behavior is tested.
 
 Implementation references: [DuckDB Python DB API](https://duckdb.org/docs/current/clients/python/dbapi), [DeepSeek JSON mode](https://api-docs.deepseek.com/guides/json_mode/). The Manrope font is bundled under the [SIL Open Font License](static/font-license.txt).
 
