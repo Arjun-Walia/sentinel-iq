@@ -57,7 +57,8 @@ The source folder must retain the four original filenames. Source files are neve
 | `templates/index.html` | Six dashboard views and accessible dialogs |
 | `static/app.js` | Rendering, SVG visualizations, filtering, search, investigation and assistant interactions |
 | `static/style.css` | Dark/lime design system, responsive layouts, and reduced-motion support |
-| `test_app.py` | 28 behavior and reproducibility tests |
+| `vercel.json` | Serverless limits and deployment bundle exclusions |
+| `test_app.py` | 29 behavior and reproducibility tests |
 
 ## Data rescue and EDA
 
@@ -149,6 +150,12 @@ node --check static/app.js
 Tests rebuild the supplied dataset twice in a temporary directory and compare clean CSV bytes; validate cardinality, chronology, joins, filters, search, pagination, export scopes, query charts, malicious filter strings, provider fallback, and isolated persistent cases. GitHub Actions repeats pipeline and API tests on Ubuntu/Python 3.12.
 
 The UI has also been exercised in Chromium at 1440px desktop and 390px mobile widths, including filtering, empty results, investigation persistence, source evidence, and question-to-chart interactions. Tables scroll within their containers on narrow screens. Keyboard search is Ctrl/Cmd+K, dialogs support Escape, and reduced-motion preferences are respected.
+
+## Vercel deployment
+
+Vercel detects the top-level Flask `app` automatically. Deploy from the repository root with `vercel --prod`; the included configuration keeps the serverless bundle focused on the analytical database and runtime assets. On Vercel, the bundled DuckDB is copied to `/tmp` so the read-only function filesystem can still support the investigation queue for the lifetime of a warm instance.
+
+The page includes Vercel's first-party Web Analytics script. Enable Web Analytics once in the project dashboard before the production deploy; the free Hobby plan includes a monthly allowance for page-view events. The analytics script is privacy-friendly and uses no third-party cookies. Runtime logs remain available from the Vercel deployment page.
 
 ## Container deployment
 

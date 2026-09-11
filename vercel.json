@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "app.py": {
+      "maxDuration": 10,
+      "excludeFiles": "{test_app.py,output/**,.venv/**,track2_cybersecurity_dataset_files/**,data/*.csv}"
+    }
+  }
+}

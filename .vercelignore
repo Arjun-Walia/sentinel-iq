@@ -1,0 +1,8 @@
+.venv
+__pycache__
+.pytest_cache
+.ruff_cache
+output
+test_app.py
+track2_cybersecurity_dataset_files
+*.log

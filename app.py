@@ -5,8 +5,10 @@ import io
 import json
 import os
 import re
+import shutil
 import sqlite3
 from datetime import timedelta
+from pathlib import Path
 
 import duckdb
 import requests
@@ -14,9 +16,24 @@ from dotenv import load_dotenv
 from flask import Flask, Response, jsonify, render_template, request
 from werkzeug.exceptions import BadRequest
 
-from pipeline import DATA, DB, build
+from pipeline import DATA as BUNDLED_DATA
+from pipeline import DB as BUNDLED_DB
+from pipeline import build
 
 load_dotenv()
+DATA = BUNDLED_DATA
+DB = BUNDLED_DB
+
+if os.getenv("VERCEL"):
+    DATA = Path("/tmp/sentinel-iq-data")
+    DB = DATA / "sentinel.duckdb"
+    if not DB.exists():
+        DATA.mkdir(parents=True, exist_ok=True)
+        for filename in ("sentinel.duckdb", "quality.json", "cases.sqlite"):
+            source = BUNDLED_DATA / filename
+            if source.exists():
+                shutil.copy2(source, DATA / filename)
+
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024
 
@@ -32,7 +49,7 @@ def query(sql, params=None):
 
 def initialize():
     if not DB.exists():
-        build()
+        build(destination=DATA)
     with sqlite3.connect(DATA / "cases.sqlite") as con:
         con.execute(
             "CREATE TABLE IF NOT EXISTS cases (hostname TEXT PRIMARY KEY, status TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', updated_at TEXT DEFAULT CURRENT_TIMESTAMP)"
