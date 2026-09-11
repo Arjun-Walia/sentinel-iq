@@ -184,7 +184,7 @@ def build(raw=RAW, destination=DATA):
             con.register("frame", df)
             con.execute(f'CREATE OR REPLACE TABLE "{name}" AS SELECT * FROM frame')
             df.to_csv(destination / f"{name}.csv", index=False)
-        con.execute("CREATE OR REPLACE VIEW daily_activity AS SELECT cast(timestamp AS DATE) day, source, department, count(*) events, count(*) FILTER (WHERE risk >= 70) high_risk FROM events GROUP BY ALL")
+        con.execute("CREATE OR REPLACE VIEW daily_activity AS SELECT cast(timestamp AS DATE) AS day, source, department, count(*) AS events, count(*) FILTER (WHERE risk >= 70) AS high_risk FROM events GROUP BY ALL")
         con.execute("CREATE OR REPLACE VIEW host_exposure AS SELECT hostname, count(*) events, count(DISTINCT source) sources, count(*) FILTER (WHERE risk >= 70) high_risk, max(risk) peak_risk FROM events WHERE hostname IS NOT NULL GROUP BY hostname")
         assert con.execute("SELECT count(*) FROM events").fetchone()[0] == sum(len(tables[s]) for s in ("iam", "endpoint", "firewall"))
         assert con.execute("SELECT count(*) - count(DISTINCT id) FROM events").fetchone()[0] == 0
