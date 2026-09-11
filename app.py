@@ -119,6 +119,10 @@ def public_asset(filename):
 
 @app.get("/robots.txt")
 @app.get("/sitemap.xml")
+@app.get("/favicon.svg")
+@app.get("/site.webmanifest")
+@app.get("/social-card.png")
+@app.get("/social-card.svg")
 def search_metadata():
     return send_from_directory(Path(app.root_path) / "public", request.path.lstrip("/"))
 

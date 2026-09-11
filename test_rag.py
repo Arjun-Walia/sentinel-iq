@@ -200,8 +200,8 @@ def test_brand_and_public_seo_assets(client):
     for path in (
         "robots.txt",
         "sitemap.xml",
-        "public/favicon.svg",
-        "public/site.webmanifest",
-        "public/social-card.png",
+        "favicon.svg",
+        "site.webmanifest",
+        "social-card.png",
     ):
         assert client.get("/" + path).status_code == 200
